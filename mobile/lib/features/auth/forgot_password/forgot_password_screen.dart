@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:social_media/core/theme/colors.dart';
-import 'package:social_media/shared/widgets/app_button.dart';
-import 'package:social_media/shared/widgets/app_text_field.dart';
+import 'package:contentos/core/theme/colors.dart';
+import 'package:contentos/shared/widgets/app_button.dart';
+import 'package:contentos/shared/widgets/app_text_field.dart';
 
 class ForgotPasswordScreen extends ConsumerStatefulWidget {
   const ForgotPasswordScreen({super.key});
