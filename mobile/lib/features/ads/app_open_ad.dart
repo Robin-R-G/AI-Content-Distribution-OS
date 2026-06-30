@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'ad_config.dart';
-import '../../core/theme/colors.dart';
 
 class AppOpenAdHandler {
   static AppOpenAd? _appOpenAd;
@@ -16,7 +15,6 @@ class AppOpenAdHandler {
     AppOpenAd.load(
       adUnitId: AdConfig.appOpenAdUnitId,
       request: const AdRequest(),
-      orientation: 1,
       adLoadCallback: AppOpenAdLoadCallback(
         onAdLoaded: (ad) {
           _appOpenAd = ad;
