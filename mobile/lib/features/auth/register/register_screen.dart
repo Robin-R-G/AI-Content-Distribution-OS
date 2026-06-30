@@ -6,6 +6,7 @@ import '../../../core/theme/colors.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../services/auth_provider.dart';
+import '../../onboarding/tutorial_service.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
   const RegisterScreen({super.key});
@@ -57,7 +58,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         ref.read(authFormProvider.notifier).clearSuccess();
         context.go('/login');
       } else {
-        context.go('/dashboard');
+        final completed = await TutorialService.isCompleted();
+        if (mounted) {
+          context.go(completed ? '/dashboard' : '/tutorial');
+        }
       }
     }
   }

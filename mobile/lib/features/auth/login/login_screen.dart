@@ -7,6 +7,7 @@ import '../../../core/theme/colors.dart';
 import '../../../shared/widgets/app_button.dart';
 import '../../../shared/widgets/app_text_field.dart';
 import '../services/auth_provider.dart';
+import '../../onboarding/tutorial_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -55,7 +56,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         );
 
     if (success && mounted) {
-      context.go('/dashboard');
+      final completed = await TutorialService.isCompleted();
+      if (mounted) {
+        context.go(completed ? '/dashboard' : '/tutorial');
+      }
     }
   }
 
@@ -328,9 +332,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               final success = await ref
                                   .read(authFormProvider.notifier)
                                   .signInWithGoogle();
-                              if (success && mounted) {
-                                context.go('/dashboard');
-                              }
+                               if (success && mounted) {
+                                  final completed = await TutorialService.isCompleted();
+                                  if (mounted) {
+                                    context.go(completed ? '/dashboard' : '/tutorial');
+                                  }
+                               }
                             },
                     ),
                     const SizedBox(height: 40),

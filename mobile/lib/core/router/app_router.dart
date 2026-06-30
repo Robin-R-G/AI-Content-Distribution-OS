@@ -7,6 +7,11 @@ import '../../features/auth/login/login_screen.dart';
 import '../../features/auth/register/register_screen.dart';
 import '../../features/auth/forgot_password/forgot_password_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
+import '../../features/post_create/post_create_screen.dart';
+import '../../features/ai_generate/ai_generate_screen.dart';
+import '../../features/schedule/schedule_screen.dart';
+import '../../features/posts_list/posts_list_screen.dart';
+import '../../features/onboarding/tutorial_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -21,16 +26,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final session = supabase.auth.currentSession;
       final location = state.matchedLocation;
 
-      // Public routes
-      final publicRoutes = ['/', '/login', '/register', '/forgot-password'];
+      final publicRoutes = ['/', '/login', '/register', '/forgot-password', '/tutorial'];
       final isPublicRoute = publicRoutes.contains(location);
 
-      // If not logged in and trying to access protected route
       if (session == null && !isPublicRoute) {
         return '/login';
       }
 
-      // If logged in and trying to access auth routes
       if (session != null && (location == '/login' || location == '/register')) {
         return '/dashboard';
       }
@@ -55,8 +57,28 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const ForgotPasswordScreen(),
       ),
       GoRoute(
+        path: '/tutorial',
+        builder: (context, state) => const TutorialScreen(),
+      ),
+      GoRoute(
         path: '/dashboard',
         builder: (context, state) => const DashboardScreen(),
+      ),
+      GoRoute(
+        path: '/post-create',
+        builder: (context, state) => const PostCreateScreen(),
+      ),
+      GoRoute(
+        path: '/ai-generate',
+        builder: (context, state) => const AiGenerateScreen(),
+      ),
+      GoRoute(
+        path: '/schedule',
+        builder: (context, state) => const ScheduleScreen(),
+      ),
+      GoRoute(
+        path: '/posts',
+        builder: (context, state) => const PostsListScreen(),
       ),
     ],
   );
