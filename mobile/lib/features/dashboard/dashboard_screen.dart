@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/theme/colors.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/banner_ad_widget.dart';
 import '../../shared/widgets/native_ad_widget.dart';
 import '../../shared/widgets/rewarded_ad_button.dart';
-import '../../shared/models/user_plan.dart';
+import '../../shared/models/subscription_plan.dart';
+import '../credits/credit_service.dart';
+import '../admin/admin_service.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -19,10 +22,16 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
 
+  bool get _isAdmin {
+    final user = Supabase.instance.client.auth.currentUser;
+    return user?.email == AdminService.adminEmail;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final userPlan = ref.watch(userPlanProvider);
-    final isFree = userPlan.plan == UserPlan.free;
+    final planState = ref.watch(userPlanProvider);
+    final creditState = ref.watch(creditProvider);
+    final isFree = planState.tier == PlanTier.free;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -33,10 +42,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               child: IndexedStack(
                 index: _selectedIndex,
                 children: [
-                  _buildHomeTab(isFree),
+                  _buildHomeTab(isFree, planState, creditState),
                   _buildContentTab(isFree),
                   _buildAnalyticsTab(),
-                  _buildSettingsTab(),
+                  _buildProfileTab(planState),
                 ],
               ),
             ),
@@ -75,9 +84,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               label: 'Analytics',
             ),
             NavigationDestination(
-              icon: Icon(Icons.settings_outlined, size: 22),
-              selectedIcon: Icon(Icons.settings_rounded, size: 22),
-              label: 'Settings',
+              icon: Icon(Icons.person_outline_rounded, size: 22),
+              selectedIcon: Icon(Icons.person_rounded, size: 22),
+              label: 'Profile',
             ),
           ],
         ),
@@ -129,18 +138,21 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ],
             ),
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: AppRadius.sm,
-            ),
-            child: Text(
-              'Upgrade',
-              style: GoogleFonts.inter(
-                fontWeight: FontWeight.w600,
-                fontSize: 13,
-                color: AppColors.primary,
+          GestureDetector(
+            onTap: () => context.push('/subscription-plans'),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: AppRadius.sm,
+              ),
+              child: Text(
+                'Upgrade',
+                style: GoogleFonts.inter(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  color: AppColors.primary,
+                ),
               ),
             ),
           ),
@@ -220,7 +232,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildHomeTab(bool isFree) {
+  Widget _buildHomeTab(bool isFree, UserPlanState planState, CreditState creditState) {
     return CustomScrollView(
       physics: const BouncingScrollPhysics(),
       slivers: [
@@ -618,38 +630,270 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     );
   }
 
-  Widget _buildSettingsTab() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: AppColors.surfaceVariant,
-              borderRadius: AppRadius.xl,
+  Widget _buildProfileTab(UserPlanState planState) {
+    final user = Supabase.instance.client.auth.currentUser;
+    final isAdmin = _isAdmin;
+
+    return CustomScrollView(
+      physics: const BouncingScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Profile',
+                  style: GoogleFonts.inter(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 20),
+
+                // User info
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: AppRadius.lg,
+                    border: Border.all(color: AppColors.border, width: 0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          gradient: isAdmin ? AppColors.darkGradient : AppColors.primaryGradient,
+                          borderRadius: AppRadius.lg,
+                        ),
+                        child: Center(
+                          child: Text(
+                            (user?.email ?? 'U')[0].toUpperCase(),
+                            style: GoogleFonts.inter(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user?.email ?? 'User',
+                              style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: planState.isPremium
+                                        ? AppColors.accent.withValues(alpha: 0.1)
+                                        : AppColors.surfaceVariant,
+                                    borderRadius: AppRadius.xs,
+                                  ),
+                                  child: Text(
+                                    planState.plan.name,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: planState.isPremium
+                                          ? AppColors.accent
+                                          : AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ),
+                                if (isAdmin) ...[
+                                  const SizedBox(width: 6),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.error.withValues(alpha: 0.1),
+                                      borderRadius: AppRadius.xs,
+                                    ),
+                                    child: Text(
+                                      'ADMIN',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w700,
+                                        color: AppColors.error,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Navigation tiles
+                _buildProfileTile(
+                  icon: Icons.workspace_premium_rounded,
+                  title: 'Change Plan',
+                  subtitle: 'View subscription plans',
+                  onTap: () => context.push('/subscription-plans'),
+                ),
+                _buildProfileTile(
+                  icon: Icons.payment_rounded,
+                  title: 'Payment',
+                  subtitle: 'Manage payments & autopay',
+                  onTap: () => context.push('/payment'),
+                ),
+                if (isAdmin) ...[
+                  _buildProfileTile(
+                    icon: Icons.admin_panel_settings_rounded,
+                    title: 'Admin Panel',
+                    subtitle: 'Manage plans, AI keys, rewards',
+                    isHighlighted: true,
+                    onTap: () => context.push('/admin/dashboard'),
+                  ),
+                ],
+                _buildProfileTile(
+                  icon: Icons.lock_outline_rounded,
+                  title: 'Change Password',
+                  subtitle: 'Update account password',
+                  onTap: () {},
+                ),
+                _buildProfileTile(
+                  icon: Icons.info_outline_rounded,
+                  title: 'About',
+                  subtitle: 'App version 1.0.0',
+                  onTap: () {},
+                ),
+                const SizedBox(height: 24),
+
+                // Sign out
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      await Supabase.instance.client.auth.signOut();
+                      if (mounted) context.go('/login');
+                    },
+                    icon: const Icon(Icons.logout_rounded, size: 18),
+                    label: Text(
+                      'Sign Out',
+                      style: GoogleFonts.inter(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: AppRadius.sm,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 40),
+              ],
             ),
-            child: const Icon(Icons.settings_rounded, size: 28, color: AppColors.textSecondary),
           ),
-          const SizedBox(height: 20),
-          Text(
-            'Settings',
-            style: GoogleFonts.inter(
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildProfileTile({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    bool isHighlighted = false,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isHighlighted
+              ? AppColors.primary.withValues(alpha: 0.05)
+              : AppColors.surface,
+          borderRadius: AppRadius.md,
+          border: Border.all(
+            color: isHighlighted
+                ? AppColors.primary.withValues(alpha: 0.3)
+                : AppColors.border,
+            width: 0.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: isHighlighted
+                    ? AppColors.primaryMuted
+                    : AppColors.surfaceVariant,
+                borderRadius: AppRadius.sm,
+              ),
+              child: Icon(
+                icon,
+                size: 20,
+                color: isHighlighted ? AppColors.primary : AppColors.textSecondary,
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Customize your experience',
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: AppColors.textSecondary,
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: GoogleFonts.inter(
+                      fontSize: 12,
+                      color: AppColors.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: AppColors.textTertiary,
+            ),
+          ],
+        ),
       ),
     );
   }

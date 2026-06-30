@@ -47,6 +47,10 @@ dependencies:
   # Notifications
   onesignal_flutter: ^5.6.3
 
+  # Payment QR & Sharing
+  qr_flutter: ^4.1.0
+  share_plus: ^10.0.0
+
   cupertino_icons: ^1.0.8
 
 dev_dependencies:

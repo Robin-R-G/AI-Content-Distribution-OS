@@ -12,6 +12,11 @@ import '../../features/ai_generate/ai_generate_screen.dart';
 import '../../features/schedule/schedule_screen.dart';
 import '../../features/posts_list/posts_list_screen.dart';
 import '../../features/onboarding/tutorial_screen.dart';
+import '../../features/profile/profile_screen.dart';
+import '../../features/payment/payment_screen.dart';
+import '../../features/subscription/subscription_plans_screen.dart';
+import '../../features/admin/admin_login_screen.dart';
+import '../../features/admin/admin_dashboard_screen.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -26,7 +31,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final session = supabase.auth.currentSession;
       final location = state.matchedLocation;
 
-      final publicRoutes = ['/', '/login', '/register', '/forgot-password', '/tutorial'];
+      final publicRoutes = ['/', '/login', '/register', '/forgot-password', '/tutorial', '/admin'];
       final isPublicRoute = publicRoutes.contains(location);
 
       if (session == null && !isPublicRoute) {
@@ -79,6 +84,30 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/posts',
         builder: (context, state) => const PostsListScreen(),
+      ),
+      GoRoute(
+        path: '/profile',
+        builder: (context, state) => const ProfileScreen(),
+      ),
+      GoRoute(
+        path: '/payment',
+        builder: (context, state) {
+          final planTier = state.uri.queryParameters['plan'];
+          final amount = double.tryParse(state.uri.queryParameters['amount'] ?? '');
+          return PaymentScreen(planTier: planTier, amount: amount);
+        },
+      ),
+      GoRoute(
+        path: '/subscription-plans',
+        builder: (context, state) => const SubscriptionPlansScreen(),
+      ),
+      GoRoute(
+        path: '/admin',
+        builder: (context, state) => const AdminLoginScreen(),
+      ),
+      GoRoute(
+        path: '/admin/dashboard',
+        builder: (context, state) => const AdminDashboardScreen(),
       ),
     ],
   );

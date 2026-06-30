@@ -9,6 +9,10 @@ import 'core/router/app_router.dart';
 import 'core/services/onesignal_service.dart';
 import 'features/ads/ad_manager.dart';
 import 'features/ads/app_open_ad.dart';
+import 'features/ai/ai_service.dart';
+import 'features/credits/credit_service.dart';
+import 'features/payment/payment_service.dart';
+import 'features/admin/admin_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,6 +34,12 @@ void main() async {
 
   // Initialize OneSignal
   OneSignalService.initialize(EnvConfig.oneSignalAppId);
+
+  // Initialize services
+  await AiService().initialize();
+  await CreditService().initialize();
+  await PaymentService().initialize();
+  await AdminService().initialize();
 
   // Preload app open ad (only shows on cold start)
   AppOpenAdHandler.preload();
