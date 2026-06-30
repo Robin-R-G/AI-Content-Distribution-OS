@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import '../../features/ads/ad_service.dart';
+import '../../features/ads/ad_config.dart';
 import '../../core/theme/colors.dart';
 
 class AdBannerWidget extends StatefulWidget {
-  final AdService adService;
   final AdSize? size;
 
   const AdBannerWidget({
     super.key,
-    required this.adService,
     this.size,
   });
 
@@ -30,7 +28,7 @@ class _AdBannerWidgetState extends State<AdBannerWidget> {
   void _loadAd() {
     _bannerAd = BannerAd(
       adUnitId: AdConfig.bannerAdUnitId,
-      size: widget.size ?? AdConfig.bannerSize,
+      size: widget.size ?? AdSize.banner,
       request: const AdRequest(),
       listener: BannerAdListener(
         onAdLoaded: (ad) {

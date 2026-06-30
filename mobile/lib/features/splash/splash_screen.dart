@@ -112,8 +112,8 @@ class _SplashScreenState extends State<SplashScreen>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.primary.withOpacity(0.15),
-                      AppColors.primary.withOpacity(0.0),
+                      AppColors.primary.withValues(alpha: 0.15),
+                      AppColors.primary.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -129,8 +129,8 @@ class _SplashScreenState extends State<SplashScreen>
                   shape: BoxShape.circle,
                   gradient: RadialGradient(
                     colors: [
-                      AppColors.accent.withOpacity(0.1),
-                      AppColors.accent.withOpacity(0.0),
+                      AppColors.accent.withValues(alpha: 0.1),
+                      AppColors.accent.withValues(alpha: 0.0),
                     ],
                   ),
                 ),
@@ -217,7 +217,7 @@ class _SplashScreenState extends State<SplashScreen>
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w400,
-                              color: Colors.white.withOpacity(0.5),
+                              color: Colors.white.withValues(alpha: 0.5),
                               letterSpacing: 0.5,
                             ),
                           ),
@@ -243,7 +243,7 @@ class _SplashScreenState extends State<SplashScreen>
                     child: CircularProgressIndicator(
                       strokeWidth: 1.5,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Colors.white.withOpacity(0.4),
+                        Colors.white.withValues(alpha: 0.4),
                       ),
                     ),
                   ),

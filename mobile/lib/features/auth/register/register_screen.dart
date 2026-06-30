@@ -32,16 +32,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     super.dispose();
   }
 
-  void _checkPasswordStrength(String value) {
-    double strength = 0;
-    if (value.length >= 8) strength += 0.25;
-    if (value.length >= 12) strength += 0.15;
-    if (RegExp(r'[A-Z]').hasMatch(value)) strength += 0.2;
-    if (RegExp(r'[0-9]').hasMatch(value)) strength += 0.2;
-    if (RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(value)) strength += 0.2;
-    setState(() => _passwordStrength = strength);
-  }
-
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -136,10 +126,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.06),
+                          color: AppColors.error.withValues(alpha: 0.06),
                           borderRadius: AppRadius.md,
                           border: Border.all(
-                            color: AppColors.error.withOpacity(0.15),
+                            color: AppColors.error.withValues(alpha: 0.15),
                           ),
                         ),
                         child: Row(

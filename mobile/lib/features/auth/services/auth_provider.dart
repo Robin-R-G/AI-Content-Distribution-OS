@@ -143,7 +143,7 @@ class AuthFormNotifier extends StateNotifier<AuthFormState> {
       await AuthSecurity.resetAttempts();
       state = state.copyWith(isLoading: false);
       return true;
-    } on AuthException catch (e) {
+    } on AuthException catch (authError) {
       // Record failed attempt
       await AuthSecurity.recordFailedAttempt();
       final attempts = await AuthSecurity.getFailedAttempts();
@@ -155,7 +155,7 @@ class AuthFormNotifier extends StateNotifier<AuthFormState> {
         failedAttempts: attempts,
         isLockedOut: isLocked,
         lockoutRemaining: remaining,
-        error: AuthSecurity.getSafeErrorMessage(e.message),
+        error: AuthSecurity.getSafeErrorMessage(authError.message),
       );
       return false;
     } catch (e) {
@@ -231,10 +231,10 @@ class AuthFormNotifier extends StateNotifier<AuthFormState> {
 
       state = state.copyWith(isLoading: false);
       return true;
-    } on AuthException catch (e) {
+    } on AuthException catch (authError) {
       state = state.copyWith(
         isLoading: false,
-        error: AuthSecurity.getSafeErrorMessage(e.message),
+        error: AuthSecurity.getSafeErrorMessage(authError.message),
       );
       return false;
     } catch (e) {
@@ -272,13 +272,13 @@ class AuthFormNotifier extends StateNotifier<AuthFormState> {
         isLoading: false,
         successMessage: 'If an account exists with this email, you will receive a password reset link.',
       );
-    } on AuthException catch (e) {
+    } on AuthException catch (_) {
       // Always show success to prevent email enumeration
       state = state.copyWith(
         isLoading: false,
         successMessage: 'If an account exists with this email, you will receive a password reset link.',
       );
-    } catch (e) {
+    } catch (_) {
       state = state.copyWith(
         isLoading: false,
         successMessage: 'If an account exists with this email, you will receive a password reset link.',
@@ -293,10 +293,10 @@ class AuthFormNotifier extends StateNotifier<AuthFormState> {
       await _authService.signInWithGoogle();
       state = state.copyWith(isLoading: false);
       return true;
-    } on AuthException catch (e) {
+    } on AuthException catch (authError) {
       state = state.copyWith(
         isLoading: false,
-        error: AuthSecurity.getSafeErrorMessage(e.message),
+        error: AuthSecurity.getSafeErrorMessage(authError.message),
       );
       return false;
     } catch (e) {

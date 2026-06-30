@@ -269,7 +269,7 @@ class AppTheme {
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.darkSurface,
         elevation: 0,
-        indicatorColor: AppColors.primaryLight.withOpacity(0.15),
+        indicatorColor: AppColors.primaryLight.withValues(alpha: 0.15),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final isSelected = states.contains(WidgetState.selected);
           return GoogleFonts.inter(

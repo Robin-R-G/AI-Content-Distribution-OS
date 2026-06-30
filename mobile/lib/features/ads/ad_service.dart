@@ -1,45 +1,20 @@
 import 'package:flutter/foundation.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-
-class AdConfig {
-  static const String bannerAdUnitId = kReleaseMode
-      ? 'ca-app-pub-xxxxxxxxxxxxx/yyyyyyyyyy'
-      : 'ca-app-pub-3940256099942544/6300978111';
-
-  static const String interstitialAdUnitId = kReleaseMode
-      ? 'ca-app-pub-xxxxxxxxxxxxx/yyyyyyyyyy'
-      : 'ca-app-pub-3940256099942544/1033173712';
-
-  static const String nativeAdUnitId = kReleaseMode
-      ? 'ca-app-pub-xxxxxxxxxxxxx/yyyyyyyyyy'
-      : 'ca-app-pub-3940256099942544/2247696110';
-
-  static const AdSize bannerSize = AdSize.banner;
-  static const bool adsEnabled = true;
-  static const int maxAdRetries = 3;
-}
+import 'ad_config.dart';
 
 class AdService {
-  final int _bannerLoadAttempts = 0;
-  int _interstitialLoadAttempts = 0;
   InterstitialAd? _interstitialAd;
 
-  void loadInterstitialAd({
-    required Function(InterstitialAd) onAdLoaded,
-    required Function(LoadAdError) onAdFailedToLoad,
-  }) {
-    _interstitialLoadAttempts = 0;
+  void loadInterstitialAd() {
     InterstitialAd.load(
       adUnitId: AdConfig.interstitialAdUnitId,
       request: const AdRequest(),
       adLoadCallback: InterstitialAdLoadCallback(
         onAdLoaded: (ad) {
           _interstitialAd = ad;
-          onAdLoaded(ad);
         },
         onAdFailedToLoad: (error) {
-          _interstitialLoadAttempts++;
-          onAdFailedToLoad(error);
+          debugPrint('Interstitial failed: ${error.message}');
         },
       ),
     );
@@ -63,6 +38,7 @@ class AdService {
       },
     );
     _interstitialAd!.show();
+    _interstitialAd = null;
   }
 
   void dispose() {

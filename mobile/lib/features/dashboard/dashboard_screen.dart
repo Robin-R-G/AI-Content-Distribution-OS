@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import '../../core/theme/colors.dart';
 import '../../shared/widgets/app_button.dart';
 import '../../shared/widgets/banner_ad_widget.dart';
 import '../../shared/widgets/native_ad_widget.dart';
 import '../../shared/widgets/rewarded_ad_button.dart';
 import '../../shared/models/user_plan.dart';
-import '../../features/ads/ad_manager.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -19,7 +17,6 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
-  final AdManager _adManager = AdManager();
 
   @override
   Widget build(BuildContext context) {
@@ -102,7 +99,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: AppRadius.sm,
             ),
             child: const Icon(Icons.auto_awesome, color: Colors.white, size: 20),
@@ -124,7 +121,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                 Text(
                   'Remove ads & unlock unlimited AI',
                   style: GoogleFonts.inter(
-                    color: Colors.white.withOpacity(0.75),
+                    color: Colors.white.withValues(alpha: 0.75),
                     fontSize: 13,
                   ),
                 ),
@@ -168,7 +165,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.1),
+                  color: AppColors.accent.withValues(alpha: 0.1),
                   borderRadius: AppRadius.xs,
                 ),
                 child: const Icon(Icons.card_giftcard_rounded, size: 16, color: AppColors.accent),
@@ -267,7 +264,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         borderRadius: AppRadius.md,
                         boxShadow: [
                           BoxShadow(
-                            color: AppColors.primary.withOpacity(0.2),
+                            color: AppColors.primary.withValues(alpha: 0.2),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),

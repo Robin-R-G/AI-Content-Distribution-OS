@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
-import 'ad_config.dart';
+import '../../features/ads/ad_config.dart';
 import '../../core/theme/colors.dart';
 
 class RewardedAdSheet extends StatefulWidget {
@@ -56,7 +56,7 @@ class _RewardedAdSheetState extends State<RewardedAdSheet> {
     RewardedAd.load(
       adUnitId: AdConfig.rewardedAdUnitId,
       request: const AdRequest(),
-      adLoadCallback: RewardedAdLoadCallback(
+      rewardedAdLoadCallback: RewardedAdLoadCallback(
         onAdLoaded: (ad) => setState(() => _rewardedAd = ad),
         onAdFailedToLoad: (error) => Navigator.pop(context, false),
       ),
@@ -119,10 +119,10 @@ class _RewardedAdSheetState extends State<RewardedAdSheet> {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.1),
+              color: AppColors.primaryMuted,
               borderRadius: BorderRadius.circular(16),
             ),
-            child: Icon(
+            child: const Icon(
               Icons.play_circle_outline_rounded,
               color: AppColors.primary,
               size: 28,
@@ -143,7 +143,7 @@ class _RewardedAdSheetState extends State<RewardedAdSheet> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.success.withValues(alpha: 0.1),
+              color: AppColors.successMuted,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(

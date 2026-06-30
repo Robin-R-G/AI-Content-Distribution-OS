@@ -20,6 +20,7 @@ class AppColors {
   // Semantic
   static const error = Color(0xFFEF4444);
   static const success = Color(0xFF10B981);
+  static const successMuted = Color(0xFFECFDF5);
   static const warning = Color(0xFFFBBF24);
   static const info = Color(0xFF3B82F6);
 
@@ -116,7 +117,7 @@ class AppShadows {
   ];
   static final primaryGlow = [
     BoxShadow(
-      color: AppColors.primary.withOpacity(0.25),
+      color: AppColors.primary.withValues(alpha: 0.25),
       blurRadius: 20,
       offset: const Offset(0, 4),
     ),

@@ -106,7 +106,7 @@ class _RewardedAdButtonState extends State<RewardedAdButton> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: _isAdReady ? AppColors.primary.withOpacity(0.1) : AppColors.surfaceVariant,
+          color: _isAdReady ? AppColors.primary.withValues(alpha: 0.1) : AppColors.surfaceVariant,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(color: _isAdReady ? AppColors.primary : AppColors.border),
         ),

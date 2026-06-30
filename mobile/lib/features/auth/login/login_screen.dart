@@ -119,10 +119,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.warning.withOpacity(0.08),
+                          color: AppColors.warning.withValues(alpha: 0.08),
                           borderRadius: AppRadius.md,
                           border: Border.all(
-                            color: AppColors.warning.withOpacity(0.2),
+                            color: AppColors.warning.withValues(alpha: 0.2),
                           ),
                         ),
                         child: Row(
@@ -154,10 +154,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: AppColors.error.withOpacity(0.06),
+                          color: AppColors.error.withValues(alpha: 0.06),
                           borderRadius: AppRadius.md,
                           border: Border.all(
-                            color: AppColors.error.withOpacity(0.15),
+                            color: AppColors.error.withValues(alpha: 0.15),
                           ),
                         ),
                         child: Row(
@@ -198,7 +198,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Container(
                         padding: const EdgeInsets.all(10),
                         decoration: BoxDecoration(
-                          color: AppColors.warning.withOpacity(0.06),
+                          color: AppColors.warning.withValues(alpha: 0.06),
                           borderRadius: AppRadius.sm,
                         ),
                         child: Text(
