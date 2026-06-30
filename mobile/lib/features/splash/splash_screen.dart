@@ -158,10 +158,12 @@ class _SplashScreenState extends State<SplashScreen>
                               gradient: AppColors.primaryGradient,
                               boxShadow: AppShadows.primaryGlow,
                             ),
-                            child: const Icon(
-                              Icons.rocket_launch_rounded,
-                              size: 40,
-                              color: Colors.white,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(22),
+                              child: Image.asset(
+                                'assets/icons/app_icon.png',
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                         ),

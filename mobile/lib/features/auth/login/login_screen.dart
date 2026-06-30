@@ -86,10 +86,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         borderRadius: AppRadius.lg,
                         boxShadow: AppShadows.primaryGlow,
                       ),
-                      child: const Icon(
-                        Icons.rocket_launch_rounded,
-                        size: 24,
-                        color: Colors.white,
+                      child: ClipRRect(
+                        borderRadius: AppRadius.lg,
+                        child: Image.asset(
+                          'assets/icons/app_icon.png',
+                          fit: BoxFit.cover,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 40),
