@@ -1,0 +1,3351 @@
+openapi: 3.1.0
+info:
+  title: Social Media AI - Content Distribution API
+  version: 1.0.0
+  description: |
+    Complete API for AI-powered social media content creation, scheduling,
+    analytics, and multi-platform distribution.
+  contact:
+    name: API Support
+    email: api-support@contentdistribution.ai
+  license:
+    name: Proprietary
+    url: https://contentdistribution.ai/license
+
+servers:
+  - url: https://api.contentdistribution.ai/v1
+    description: Production
+  - url: https://staging-api.contentdistribution.ai/v1
+    description: Staging
+
+security:
+  - BearerAuth: []
+
+tags:
+  - name: Authentication
+    description: User registration, login, OAuth, MFA
+  - name: Users
+    description: User profile and session management
+  - name: Organizations
+    description: Organization CRUD, members, invitations
+  - name: Workspaces
+    description: Workspace CRUD, members, connected accounts
+  - name: Posts
+    description: Post creation, publishing, scheduling
+  - name: Media
+    description: Media upload and management
+  - name: AI
+    description: AI content generation and prediction
+  - name: Analytics
+    description: Performance analytics and reporting
+  - name: Schedule
+    description: Calendar and queue management
+  - name: Notifications
+    description: User notifications
+  - name: Billing
+    description: Subscription and payment management
+  - name: Webhooks
+    description: Webhook management
+  - name: Templates
+    description: Content templates
+  - name: Integrations
+    description: Third-party integrations
+
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registration successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '409':
+          $ref: '#/components/responses/Conflict'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login with credentials
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Authentication]
+      summary: Logout and revoke tokens
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '204':
+          description: Logout successful
+
+  /auth/refresh:
+    post:
+      tags: [Authentication]
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/forgot-password:
+    post:
+      tags: [Authentication]
+      summary: Request password reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      message:
+                        type: string
+                      expiresIn:
+                        type: integer
+
+  /auth/reset-password:
+    post:
+      tags: [Authentication]
+      summary: Reset password with token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Password reset successful
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/verify-email:
+    post:
+      tags: [Authentication]
+      summary: Verify email address
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Email verified
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/mfa/setup:
+    post:
+      tags: [Authentication]
+      summary: Initialize MFA setup
+      responses:
+        '200':
+          description: MFA setup initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      secret:
+                        type: string
+                      qrCodeUrl:
+                        type: string
+                      qrCodeImage:
+                        type: string
+                      recoveryCodes:
+                        type: array
+                        items:
+                          type: string
+
+  /auth/mfa/verify:
+    post:
+      tags: [Authentication]
+      summary: Verify MFA code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              properties:
+                code:
+                  type: string
+                  pattern: '^\d{6}$'
+                mfaToken:
+                  type: string
+      responses:
+        '200':
+          description: MFA verified
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /oauth/{provider}:
+    get:
+      tags: [Authentication]
+      summary: Initiate OAuth flow
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [google, github, twitter, linkedin, facebook]
+        - name: redirect_uri
+          in: query
+          schema:
+            type: string
+            format: uri
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to OAuth provider
+
+  /oauth/{provider}/callback:
+    get:
+      tags: [Authentication]
+      summary: Handle OAuth callback
+      security: []
+      parameters:
+        - name: provider
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OAuth authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Get current user profile
+      parameters:
+        - name: include
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    patch:
+      tags: [Users]
+      summary: Update user profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUserRequest'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+
+    delete:
+      tags: [Users]
+      summary: Delete user account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+                reason:
+                  type: string
+                  maxLength: 500
+      responses:
+        '200':
+          description: Account scheduled for deletion
+
+  /users/me/avatar:
+    post:
+      tags: [Users]
+      summary: Upload user avatar
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [avatar]
+              properties:
+                avatar:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Avatar uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: object
+                    properties:
+                      avatar:
+                        type: string
+                        format: uri
+                      avatarThumbnail:
+                        type: string
+                        format: uri
+
+  /users/me/sessions:
+    get:
+      tags: [Users]
+      summary: List active sessions
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Sessions list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedSessions'
+
+    delete:
+      tags: [Users]
+      summary: Terminate all other sessions
+      responses:
+        '200':
+          description: Sessions terminated
+
+  /users/me/sessions/{sessionId}:
+    delete:
+      tags: [Users]
+      summary: Terminate specific session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Session terminated
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /organizations:
+    post:
+      tags: [Organizations]
+      summary: Create organization
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateOrganizationRequest'
+      responses:
+        '201':
+          description: Organization created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+
+    get:
+      tags: [Organizations]
+      summary: List user's organizations
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Organizations list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedOrganizations'
+
+  /organizations/{organizationId}:
+    get:
+      tags: [Organizations]
+      summary: Get organization details
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: include
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Organization details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Organization'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+    patch:
+      tags: [Organizations]
+      summary: Update organization
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateOrganizationRequest'
+      responses:
+        '200':
+          description: Organization updated
+
+    delete:
+      tags: [Organizations]
+      summary: Delete organization
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmSlug]
+              properties:
+                confirmSlug:
+                  type: string
+      responses:
+        '200':
+          description: Organization deleted
+
+  /organizations/{organizationId}/members:
+    get:
+      tags: [Organizations]
+      summary: List organization members
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [owner, admin, member]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Members list
+
+  /organizations/{organizationId}/invitations:
+    post:
+      tags: [Organizations]
+      summary: Invite member
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InviteMemberRequest'
+      responses:
+        '201':
+          description: Invitation sent
+
+    get:
+      tags: [Organizations]
+      summary: List pending invitations
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Invitations list
+
+  /workspaces/{workspaceId}:
+    get:
+      tags: [Workspaces]
+      summary: Get workspace details
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: include
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Workspace details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+
+    patch:
+      tags: [Workspaces]
+      summary: Update workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateWorkspaceRequest'
+      responses:
+        '200':
+          description: Workspace updated
+
+    delete:
+      tags: [Workspaces]
+      summary: Delete workspace
+      parameters:
+        - name: workspaceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [confirmName]
+              properties:
+                confirmName:
+                  type: string
+      responses:
+        '200':
+          description: Workspace deleted
+
+  /organizations/{organizationId}/workspaces:
+    post:
+      tags: [Workspaces]
+      summary: Create workspace
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWorkspaceRequest'
+      responses:
+        '201':
+          description: Workspace created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Workspace'
+
+    get:
+      tags: [Workspaces]
+      summary: List workspaces
+      parameters:
+        - name: organizationId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Workspaces list
+
+  /posts:
+    post:
+      tags: [Posts]
+      summary: Create a post
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePostRequest'
+      responses:
+        '201':
+          description: Post created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+
+    get:
+      tags: [Posts]
+      summary: List posts
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: sort
+          in: query
+          schema:
+            type: string
+            default: -createdAt
+        - name: filter[status]
+          in: query
+          schema:
+            type: string
+            enum: [draft, scheduled, publishing, published, failed]
+        - name: filter[platform]
+          in: query
+          schema:
+            type: string
+        - name: filter[category]
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Posts list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedPosts'
+
+  /posts/{postId}:
+    get:
+      tags: [Posts]
+      summary: Get post details
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: include
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Post details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Post'
+
+    patch:
+      tags: [Posts]
+      summary: Update post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdatePostRequest'
+      responses:
+        '200':
+          description: Post updated
+
+    delete:
+      tags: [Posts]
+      summary: Delete post
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Post deleted
+
+  /posts/{postId}/publish:
+    post:
+      tags: [Posts]
+      summary: Publish post immediately
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                publishNow:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Post publishing
+
+  /posts/schedule:
+    post:
+      tags: [Posts]
+      summary: Schedule multiple posts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkScheduleRequest'
+      responses:
+        '201':
+          description: Posts scheduled
+
+  /posts/{postId}/versions:
+    post:
+      tags: [Posts]
+      summary: Create post version
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content]
+              properties:
+                content:
+                  type: string
+                label:
+                  type: string
+                mediaIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Version created
+
+    get:
+      tags: [Posts]
+      summary: List post versions
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Versions list
+
+  /posts/{postId}/analytics:
+    get:
+      tags: [Posts, Analytics]
+      summary: Get post analytics
+      parameters:
+        - name: postId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: platform
+          in: query
+          schema:
+            type: string
+        - name: dateRange
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d, all]
+      responses:
+        '200':
+          description: Post analytics
+
+  /media/upload:
+    post:
+      tags: [Media]
+      summary: Upload media file
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file, workspaceId]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                workspaceId:
+                  type: string
+                folder:
+                  type: string
+                alt:
+                  type: string
+                  maxLength: 500
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Media uploaded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+
+  /media:
+    get:
+      tags: [Media]
+      summary: List media files
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: filter[type]
+          in: query
+          schema:
+            type: string
+            enum: [image, video, audio, document]
+        - name: filter[folder]
+          in: query
+          schema:
+            type: string
+        - name: filter[tags]
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Media list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PaginatedMedia'
+
+  /media/{mediaId}:
+    get:
+      tags: [Media]
+      summary: Get media details
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Media details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Media'
+
+    patch:
+      tags: [Media]
+      summary: Update media metadata
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filename:
+                  type: string
+                alt:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                folder:
+                  type: string
+      responses:
+        '200':
+          description: Media updated
+
+    delete:
+      tags: [Media]
+      summary: Delete media
+      parameters:
+        - name: mediaId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Media deleted
+
+  /ai/generate/caption:
+    post:
+      tags: [AI]
+      summary: Generate captions
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateCaptionRequest'
+      responses:
+        '200':
+          description: Captions generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AIGenerateResponse'
+
+  /ai/generate/title:
+    post:
+      tags: [AI]
+      summary: Generate titles
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topic, type]
+              properties:
+                topic:
+                  type: string
+                  minLength: 10
+                  maxLength: 500
+                type:
+                  type: string
+                  enum: [blog, video, article, newsletter, podcast]
+                style:
+                  type: string
+                  enum: [listicle, how-to, question, statement, numbered]
+                keywords:
+                  type: array
+                  items:
+                    type: string
+                count:
+                  type: integer
+                  minimum: 1
+                  maximum: 10
+                  default: 5
+      responses:
+        '200':
+          description: Titles generated
+
+  /ai/generate/hashtags:
+    post:
+      tags: [AI]
+      summary: Generate hashtags
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, platform]
+              properties:
+                content:
+                  type: string
+                platform:
+                  type: string
+                count:
+                  type: integer
+                  minimum: 5
+                  maximum: 30
+                  default: 10
+                mix:
+                  type: string
+                  enum: [trending, niche, branded, balanced]
+                exclude:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Hashtags generated
+
+  /ai/generate/thumbnail:
+    post:
+      tags: [AI]
+      summary: Generate thumbnail ideas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, type]
+              properties:
+                content:
+                  type: string
+                type:
+                  type: string
+                  enum: [youtube, blog, instagram, thumbnail]
+                style:
+                  type: string
+                  enum: [minimalist, bold, professional, creative, educational]
+                count:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                  default: 3
+      responses:
+        '200':
+          description: Thumbnail ideas generated
+
+  /ai/generate/content-ideas:
+    post:
+      tags: [AI]
+      summary: Generate content ideas
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topic, platforms]
+              properties:
+                topic:
+                  type: string
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                count:
+                  type: integer
+                  minimum: 1
+                  maximum: 20
+                  default: 10
+                contentTypes:
+                  type: array
+                  items:
+                    type: string
+                    enum: [post, reel, story, carousel, video, article]
+      responses:
+        '200':
+          description: Content ideas generated
+
+  /ai/generate/script:
+    post:
+      tags: [AI]
+      summary: Generate video/podcast scripts
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [topic, type]
+              properties:
+                topic:
+                  type: string
+                type:
+                  type: string
+                  enum: [youtube, tiktok, reel, podcast, webinar]
+                duration:
+                  type: integer
+                  minimum: 30
+                  maximum: 3600
+                tone:
+                  type: string
+                  enum: [professional, casual, energetic, educational]
+                includeHooks:
+                  type: boolean
+                  default: true
+                includeCTA:
+                  type: boolean
+                  default: true
+                targetAudience:
+                  type: string
+      responses:
+        '200':
+          description: Script generated
+
+  /ai/rewrite:
+    post:
+      tags: [AI]
+      summary: Rewrite content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, instruction]
+              properties:
+                content:
+                  type: string
+                  minLength: 10
+                  maxLength: 10000
+                instruction:
+                  type: string
+                  minLength: 10
+                  maxLength: 500
+                platform:
+                  type: string
+                tone:
+                  type: string
+                preserveLength:
+                  type: boolean
+      responses:
+        '200':
+          description: Content rewritten
+
+  /ai/translate:
+    post:
+      tags: [AI]
+      summary: Translate content
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, targetLanguage]
+              properties:
+                content:
+                  type: string
+                targetLanguage:
+                  type: string
+                sourceLanguage:
+                  type: string
+                preserveFormatting:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Content translated
+
+  /ai/predict/trend:
+    post:
+      tags: [AI]
+      summary: Predict trending topics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [industry, platform]
+              properties:
+                industry:
+                  type: string
+                platform:
+                  type: string
+                timeframe:
+                  type: string
+                  enum: [week, month, quarter]
+                  default: month
+                includeHistorical:
+                  type: boolean
+                  default: false
+      responses:
+        '200':
+          description: Trends predicted
+
+  /ai/predict/viral:
+    post:
+      tags: [AI]
+      summary: Predict viral potential
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, platform]
+              properties:
+                content:
+                  type: string
+                platform:
+                  type: string
+                mediaIds:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Viral prediction
+
+  /ai/repurpose:
+    post:
+      tags: [AI]
+      summary: Repurpose content for platforms
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [content, targetPlatforms]
+              properties:
+                content:
+                  type: string
+                targetPlatforms:
+                  type: array
+                  items:
+                    type: string
+                style:
+                  type: string
+                  enum: [adaptive, native, minimal]
+                includeMedia:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Content repurposed
+
+  /ai/usage:
+    get:
+      tags: [AI]
+      summary: Get AI usage statistics
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [day, week, month, year]
+            default: month
+      responses:
+        '200':
+          description: Usage statistics
+
+  /ai/credits:
+    get:
+      tags: [AI]
+      summary: Get credit balance
+      responses:
+        '200':
+          description: Credit balance
+
+  /analytics/overview:
+    get:
+      tags: [Analytics]
+      summary: Get analytics overview
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [7d, 30d, 90d, 1y]
+            default: 30d
+      responses:
+        '200':
+          description: Analytics overview
+
+  /analytics/platform/{platform}:
+    get:
+      tags: [Analytics]
+      summary: Get platform analytics
+      parameters:
+        - name: platform
+          in: path
+          required: true
+          schema:
+            type: string
+            enum: [twitter, linkedin, facebook, instagram, tiktok, youtube, pinterest]
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+      responses:
+        '200':
+          description: Platform analytics
+
+  /analytics/audience:
+    get:
+      tags: [Analytics]
+      summary: Get audience demographics
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: platform
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Audience data
+
+  /analytics/engagement:
+    get:
+      tags: [Analytics]
+      summary: Get engagement analytics
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+        - name: platform
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Engagement analytics
+
+  /analytics/growth:
+    get:
+      tags: [Analytics]
+      summary: Get follower growth
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+      responses:
+        '200':
+          description: Growth analytics
+
+  /analytics/optimal-times:
+    get:
+      tags: [Analytics]
+      summary: Get optimal posting times
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: platform
+          in: query
+          schema:
+            type: string
+        - name: timezone
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Optimal times
+
+  /analytics/hashtag-performance:
+    get:
+      tags: [Analytics]
+      summary: Get hashtag performance
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Hashtag analytics
+
+  /analytics/reports:
+    get:
+      tags: [Analytics]
+      summary: List reports
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Reports list
+
+    post:
+      tags: [Analytics]
+      summary: Generate report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspaceId, name, type, period]
+              properties:
+                workspaceId:
+                  type: string
+                name:
+                  type: string
+                type:
+                  type: string
+                  enum: [custom, monthly, weekly, quarterly]
+                period:
+                  type: object
+                  properties:
+                    start:
+                      type: string
+                      format: date
+                    end:
+                      type: string
+                      format: date
+                sections:
+                  type: array
+                  items:
+                    type: string
+                format:
+                  type: string
+                  enum: [pdf, csv, json]
+                  default: pdf
+      responses:
+        '201':
+          description: Report generating
+
+  /analytics/export:
+    get:
+      tags: [Analytics]
+      summary: Export analytics data
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [posts, engagement, growth, audience]
+        - name: period
+          in: query
+          schema:
+            type: string
+            default: 30d
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [csv, json]
+            default: csv
+      responses:
+        '200':
+          description: Export download URL
+
+  /schedule/calendar:
+    get:
+      tags: [Schedule]
+      summary: Get calendar view
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: platform
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Calendar data
+
+  /schedule/queue:
+    get:
+      tags: [Schedule]
+      summary: Get posting queue
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: platform
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [scheduled, publishing, published, failed]
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Queue list
+
+  /schedule/queue/reorder:
+    post:
+      tags: [Schedule]
+      summary: Reorder queue
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspaceId, items]
+              properties:
+                workspaceId:
+                  type: string
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      postId:
+                        type: string
+                      position:
+                        type: integer
+      responses:
+        '200':
+          description: Queue reordered
+
+  /schedule/suggestions:
+    get:
+      tags: [Schedule]
+      summary: Get scheduling suggestions
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: platform
+          in: query
+          schema:
+            type: string
+        - name: count
+          in: query
+          schema:
+            type: integer
+            default: 5
+      responses:
+        '200':
+          description: Scheduling suggestions
+
+  /notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: type
+          in: query
+          schema:
+            type: string
+        - name: read
+          in: query
+          schema:
+            type: boolean
+        - name: workspaceId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notifications list
+
+  /notifications/{notificationId}:
+    get:
+      tags: [Notifications]
+      summary: Get notification
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification details
+
+    delete:
+      tags: [Notifications]
+      summary: Delete notification
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Notification deleted
+
+  /notifications/{notificationId}/read:
+    patch:
+      tags: [Notifications]
+      summary: Mark as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification marked as read
+
+  /notifications/read-all:
+    post:
+      tags: [Notifications]
+      summary: Mark all as read
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                before:
+                  type: string
+                  format: date-time
+                type:
+                  type: string
+      responses:
+        '200':
+          description: All marked as read
+
+  /notifications/preferences:
+    get:
+      tags: [Notifications]
+      summary: Get notification preferences
+      responses:
+        '200':
+          description: Preferences
+
+    patch:
+      tags: [Notifications]
+      summary: Update notification preferences
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NotificationPreferences'
+      responses:
+        '200':
+          description: Preferences updated
+
+  /billing/subscription:
+    get:
+      tags: [Billing]
+      summary: Get subscription
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+    post:
+      tags: [Billing]
+      summary: Create subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [plan, paymentMethodId]
+              properties:
+                plan:
+                  type: string
+                  enum: [free, starter, pro, business, enterprise]
+                paymentMethodId:
+                  type: string
+                couponCode:
+                  type: string
+                billingCycle:
+                  type: string
+                  enum: [monthly, annual]
+                  default: monthly
+      responses:
+        '201':
+          description: Subscription created
+
+    patch:
+      tags: [Billing]
+      summary: Update subscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plan:
+                  type: string
+                paymentMethodId:
+                  type: string
+      responses:
+        '200':
+          description: Subscription updated
+
+    delete:
+      tags: [Billing]
+      summary: Cancel subscription
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+                feedback:
+                  type: string
+                cancelAtPeriodEnd:
+                  type: boolean
+                  default: true
+      responses:
+        '200':
+          description: Subscription cancelled
+
+  /billing/invoices:
+    get:
+      tags: [Billing]
+      summary: List invoices
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [paid, pending, failed, void]
+      responses:
+        '200':
+          description: Invoices list
+
+  /billing/invoices/{invoiceId}:
+    get:
+      tags: [Billing]
+      summary: Get invoice
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Invoice details
+
+  /billing/invoices/{invoiceId}/pay:
+    post:
+      tags: [Billing]
+      summary: Retry invoice payment
+      parameters:
+        - name: invoiceId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                paymentMethodId:
+                  type: string
+      responses:
+        '200':
+          description: Payment successful
+
+  /billing/payment-methods:
+    get:
+      tags: [Billing]
+      summary: List payment methods
+      responses:
+        '200':
+          description: Payment methods list
+
+    post:
+      tags: [Billing]
+      summary: Add payment method
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token]
+              properties:
+                token:
+                  type: string
+                setAsDefault:
+                  type: boolean
+      responses:
+        '201':
+          description: Payment method added
+
+  /billing/payment-methods/{paymentMethodId}:
+    patch:
+      tags: [Billing]
+      summary: Update payment method
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isDefault:
+                  type: boolean
+      responses:
+        '200':
+          description: Payment method updated
+
+    delete:
+      tags: [Billing]
+      summary: Delete payment method
+      parameters:
+        - name: paymentMethodId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Payment method deleted
+
+  /billing/credits:
+    get:
+      tags: [Billing]
+      summary: Get credit balance
+      responses:
+        '200':
+          description: Credit balance
+
+  /billing/credits/purchase:
+    post:
+      tags: [Billing]
+      summary: Purchase credits
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [amount, paymentMethodId]
+              properties:
+                amount:
+                  type: integer
+                  minimum: 1000
+                  maximum: 100000
+                paymentMethodId:
+                  type: string
+      responses:
+        '201':
+          description: Credits purchased
+
+  /webhooks:
+    get:
+      tags: [Webhooks]
+      summary: List webhooks
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, inactive, failing]
+      responses:
+        '200':
+          description: Webhooks list
+
+    post:
+      tags: [Webhooks]
+      summary: Create webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateWebhookRequest'
+      responses:
+        '201':
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+
+  /webhooks/{webhookId}:
+    get:
+      tags: [Webhooks]
+      summary: Get webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Webhook details
+
+    patch:
+      tags: [Webhooks]
+      summary: Update webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                url:
+                  type: string
+                  format: uri
+                events:
+                  type: array
+                  items:
+                    type: string
+                active:
+                  type: boolean
+      responses:
+        '200':
+          description: Webhook updated
+
+    delete:
+      tags: [Webhooks]
+      summary: Delete webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Webhook deleted
+
+  /webhooks/{webhookId}/test:
+    post:
+      tags: [Webhooks]
+      summary: Test webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [event]
+              properties:
+                event:
+                  type: string
+      responses:
+        '200':
+          description: Test delivery sent
+
+  /webhooks/{webhookId}/deliveries:
+    get:
+      tags: [Webhooks]
+      summary: List deliveries
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [success, failed, pending]
+      responses:
+        '200':
+          description: Deliveries list
+
+  /templates:
+    get:
+      tags: [Templates]
+      summary: List templates
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [post, story, reel, carousel, banner, custom]
+        - name: platform
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Templates list
+
+    post:
+      tags: [Templates]
+      summary: Create template
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTemplateRequest'
+      responses:
+        '201':
+          description: Template created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Template'
+
+  /templates/{templateId}:
+    get:
+      tags: [Templates]
+      summary: Get template
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Template details
+
+    patch:
+      tags: [Templates]
+      summary: Update template
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                content:
+                  type: string
+                platforms:
+                  type: array
+                  items:
+                    type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: Template updated
+
+    delete:
+      tags: [Templates]
+      summary: Delete template
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Template deleted
+
+  /templates/{templateId}/use:
+    post:
+      tags: [Templates]
+      summary: Create post from template
+      parameters:
+        - name: templateId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspaceId, variables]
+              properties:
+                workspaceId:
+                  type: string
+                variables:
+                  type: object
+                mediaIds:
+                  type: array
+                  items:
+                    type: string
+                scheduledAt:
+                  type: string
+                  format: date-time
+                platforms:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '201':
+          description: Post created from template
+
+  /integrations:
+    get:
+      tags: [Integrations]
+      summary: List available integrations
+      parameters:
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+        - name: category
+          in: query
+          schema:
+            type: string
+            enum: [social, analytics, project-management, storage, ai, other]
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Integrations list
+
+  /integrations/{integrationId}:
+    get:
+      tags: [Integrations]
+      summary: Get integration details
+      parameters:
+        - name: integrationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Integration details
+
+  /integrations/{integrationId}/install:
+    post:
+      tags: [Integrations]
+      summary: Install integration
+      parameters:
+        - name: integrationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspaceId]
+              properties:
+                workspaceId:
+                  type: string
+                config:
+                  type: object
+                credentials:
+                  type: object
+      responses:
+        '201':
+          description: Integration installed
+
+  /integrations/installed:
+    get:
+      tags: [Integrations]
+      summary: List installed integrations
+      parameters:
+        - name: workspaceId
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [connected, disconnected, error]
+        - $ref: '#/components/parameters/Cursor'
+        - $ref: '#/components/parameters/Limit'
+      responses:
+        '200':
+          description: Installed integrations
+
+  /integrations/{installationId}:
+    delete:
+      tags: [Integrations]
+      summary: Uninstall integration
+      parameters:
+        - name: installationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Integration uninstalled
+
+  /integrations/{installationId}/config:
+    patch:
+      tags: [Integrations]
+      summary: Update integration config
+      parameters:
+        - name: installationId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [config]
+              properties:
+                config:
+                  type: object
+      responses:
+        '200':
+          description: Config updated
+
+  /integrations/{installationId}/health:
+    get:
+      tags: [Integrations]
+      summary: Check integration health
+      parameters:
+        - name: installationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Health status
+
+  /integrations/{installationId}/sync:
+    post:
+      tags: [Integrations]
+      summary: Trigger manual sync
+      parameters:
+        - name: installationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Sync started
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  parameters:
+    Cursor:
+      name: cursor
+      in: query
+      schema:
+        type: string
+      description: Pagination cursor
+    Limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+      description: Results per page
+
+  responses:
+    ValidationError:
+      description: Validation error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflict:
+      description: Resource conflict
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  code:
+                    type: string
+                  message:
+                    type: string
+            requestId:
+              type: string
+            timestamp:
+              type: string
+              format: date-time
+
+    RegisterRequest:
+      type: object
+      required: [email, password, name, acceptTerms]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        organizationName:
+          type: string
+          minLength: 2
+          maxLength: 100
+        acceptTerms:
+          type: boolean
+          enum: [true]
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+        mfaCode:
+          type: string
+          pattern: '^\d{6}$'
+
+    AuthResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            user:
+              $ref: '#/components/schemas/User'
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+            expiresIn:
+              type: integer
+            requiresMfa:
+              type: boolean
+
+    TokenResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+            expiresIn:
+              type: integer
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        avatar:
+          type: string
+          format: uri
+        bio:
+          type: string
+        timezone:
+          type: string
+        locale:
+          type: string
+        emailVerified:
+          type: boolean
+        mfaEnabled:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    UpdateUserRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        bio:
+          type: string
+          maxLength: 500
+        timezone:
+          type: string
+        locale:
+          type: string
+
+    Organization:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        website:
+          type: string
+          format: uri
+        logo:
+          type: string
+          format: uri
+        ownerId:
+          type: string
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateOrganizationRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        slug:
+          type: string
+          minLength: 3
+          maxLength: 50
+        description:
+          type: string
+          maxLength: 500
+        website:
+          type: string
+          format: uri
+
+    UpdateOrganizationRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        website:
+          type: string
+          format: uri
+        logo:
+          type: string
+          format: uri
+
+    Workspace:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        organizationId:
+          type: string
+        createdBy:
+          type: string
+        settings:
+          type: object
+        memberCount:
+          type: integer
+        connectedAccounts:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreateWorkspaceRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        description:
+          type: string
+          maxLength: 500
+        settings:
+          type: object
+
+    UpdateWorkspaceRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        settings:
+          type: object
+
+    Post:
+      type: object
+      properties:
+        id:
+          type: string
+        workspaceId:
+          type: string
+        content:
+          type: string
+        platforms:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [draft, scheduled, publishing, published, failed]
+        media:
+          type: array
+          items:
+            type: object
+        tags:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        publishedAt:
+          type: string
+          format: date-time
+        createdBy:
+          type: object
+          properties:
+            id:
+              type: string
+            name:
+              type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    CreatePostRequest:
+      type: object
+      required: [workspaceId, content, platforms]
+      properties:
+        workspaceId:
+          type: string
+        content:
+          type: string
+          minLength: 1
+          maxLength: 10000
+        platforms:
+          type: array
+          minItems: 1
+          items:
+            type: string
+            enum: [twitter, linkedin, facebook, instagram, tiktok, youtube, pinterest]
+        mediaIds:
+          type: array
+          items:
+            type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          maxItems: 20
+          items:
+            type: string
+        category:
+          type: string
+        variables:
+          type: object
+
+    UpdatePostRequest:
+      type: object
+      properties:
+        content:
+          type: string
+        platforms:
+          type: array
+          items:
+            type: string
+        mediaIds:
+          type: array
+          items:
+            type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        category:
+          type: string
+
+    BulkScheduleRequest:
+      type: object
+      required: [workspaceId, posts]
+      properties:
+        workspaceId:
+          type: string
+        posts:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required: [content, platforms, scheduledAt]
+            properties:
+              content:
+                type: string
+              platforms:
+                type: array
+                items:
+                  type: string
+              scheduledAt:
+                type: string
+                format: date-time
+              mediaIds:
+                type: array
+                items:
+                  type: string
+              tags:
+                type: array
+                items:
+                  type: string
+
+    Media:
+      type: object
+      properties:
+        id:
+          type: string
+        filename:
+          type: string
+        originalFilename:
+          type: string
+        mimeType:
+          type: string
+        size:
+          type: integer
+        url:
+          type: string
+          format: uri
+        thumbnailUrl:
+          type: string
+          format: uri
+        dimensions:
+          type: object
+          properties:
+            width:
+              type: integer
+            height:
+              type: integer
+        folder:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        alt:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    GenerateCaptionRequest:
+      type: object
+      required: [prompt, platform]
+      properties:
+        prompt:
+          type: string
+          minLength: 10
+          maxLength: 500
+        platform:
+          type: string
+          enum: [twitter, linkedin, facebook, instagram, tiktok]
+        tone:
+          type: string
+          enum: [professional, casual, humorous, inspirational, informative]
+        length:
+          type: string
+          enum: [short, medium, long]
+        includeHashtags:
+          type: boolean
+          default: false
+        includeEmojis:
+          type: boolean
+          default: false
+        context:
+          type: string
+          maxLength: 1000
+        count:
+          type: integer
+          minimum: 1
+          maximum: 5
+          default: 1
+
+    AIGenerateResponse:
+      type: object
+      properties:
+        data:
+          type: object
+          properties:
+            captions:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  content:
+                    type: string
+                  platform:
+                    type: string
+                  characterCount:
+                    type: integer
+                  hashtags:
+                    type: array
+                    items:
+                      type: string
+                  score:
+                    type: integer
+            tokensUsed:
+              type: integer
+            creditsRemaining:
+              type: integer
+
+    InviteMemberRequest:
+      type: object
+      required: [email, role]
+      properties:
+        email:
+          type: string
+          format: email
+        role:
+          type: string
+          enum: [admin, member]
+        message:
+          type: string
+          maxLength: 500
+        workspaceIds:
+          type: array
+          items:
+            type: string
+
+    CreateWebhookRequest:
+      type: object
+      required: [workspaceId, name, url, events]
+      properties:
+        workspaceId:
+          type: string
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          minItems: 1
+          items:
+            type: string
+        secret:
+          type: string
+        active:
+          type: boolean
+          default: true
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [active, inactive, failing]
+        secret:
+          type: string
+        lastTriggeredAt:
+          type: string
+          format: date-time
+        failureCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    CreateTemplateRequest:
+      type: object
+      required: [workspaceId, name, type, platforms, content]
+      properties:
+        workspaceId:
+          type: string
+        name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        type:
+          type: string
+          enum: [post, story, reel, carousel, banner, custom]
+        platforms:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+          maxLength: 500
+        content:
+          type: string
+          maxLength: 5000
+        variables:
+          type: array
+          items:
+            type: object
+            properties:
+              name:
+                type: string
+              type:
+                type: string
+                enum: [text, number, date, select, boolean]
+              required:
+                type: boolean
+              defaultValue:
+                type: string
+              options:
+                type: array
+                items:
+                  type: string
+        media:
+          type: array
+          items:
+            type: object
+            properties:
+              type:
+                type: string
+                enum: [image, video, any]
+              required:
+                type: boolean
+              position:
+                type: string
+                enum: [top, bottom, inline]
+        tags:
+          type: array
+          items:
+            type: string
+
+    Template:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        platforms:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+        content:
+          type: string
+        variables:
+          type: array
+          items:
+            type: object
+        media:
+          type: array
+          items:
+            type: object
+        tags:
+          type: array
+          items:
+            type: string
+        usageCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Subscription:
+      type: object
+      properties:
+        id:
+          type: string
+        plan:
+          type: string
+          enum: [free, starter, pro, business, enterprise]
+        status:
+          type: string
+          enum: [active, cancelled, past_due, trialing]
+        currentPeriod:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        pricing:
+          type: object
+          properties:
+            amount:
+              type: integer
+            currency:
+              type: string
+            interval:
+              type: string
+        features:
+          type: object
+        usage:
+          type: object
+        nextBillingDate:
+          type: string
+          format: date-time
+        cancelAt:
+          type: string
+          format: date-time
+
+    NotificationPreferences:
+      type: object
+      properties:
+        email:
+          type: object
+          properties:
+            postPublished:
+              type: boolean
+            postFailed:
+              type: boolean
+            teamUpdates:
+              type: boolean
+            billingAlerts:
+              type: boolean
+            weeklyDigest:
+              type: boolean
+            productUpdates:
+              type: boolean
+        push:
+          type: object
+          properties:
+            postPublished:
+              type: boolean
+            postFailed:
+              type: boolean
+            teamUpdates:
+              type: boolean
+            comments:
+              type: boolean
+            mentions:
+              type: boolean
+        digestFrequency:
+          type: string
+          enum: [daily, weekly, none]
+        quietHoursStart:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        quietHoursEnd:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+        timezone:
+          type: string
+
+    PaginatedPosts:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Post'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    PaginatedMedia:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Media'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    PaginatedOrganizations:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Organization'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    PaginatedSessions:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              device:
+                type: string
+              ip:
+                type: string
+              location:
+                type: string
+              lastActiveAt:
+                type: string
+                format: date-time
+              isCurrent:
+                type: boolean
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    Pagination:
+      type: object
+      properties:
+        cursor:
+          type: string
+          nullable: true
+        hasMore:
+          type: boolean
+        total:
+          type: integer

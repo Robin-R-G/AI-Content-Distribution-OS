@@ -1,0 +1,4 @@
+-dontwarn javax.annotation.**
+-keep class com.contentos.app.** { *; }
+-keep class io.flutter.** { *; }
+-keep class io.flutter.plugins.** { *; }

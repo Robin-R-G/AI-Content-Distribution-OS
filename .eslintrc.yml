@@ -1,0 +1,9 @@
+include: ["src/**/*.ts"]
+exclude: ["node_modules", "dist", "**/*.test.ts"]
+rules:
+  no-console: warn
+  no-unused-vars: error
+  prefer-const: error
+  no-var: error
+  eqeqeq: error
+  curly: error
