@@ -8,14 +8,14 @@ import '../../features/auth/register/register_screen.dart';
 import '../../features/auth/forgot_password/forgot_password_screen.dart';
 import '../../features/dashboard/dashboard_screen.dart';
 
-final _rootNavigatorKey = GlobalKey<NavigatorState>();
+final rootNavigatorKey = GlobalKey<NavigatorState>();
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final supabase = Supabase.instance.client;
 
   return GoRouter(
     initialLocation: '/',
-    navigatorKey: _rootNavigatorKey,
+    navigatorKey: rootNavigatorKey,
     debugLogDiagnostics: true,
     redirect: (context, state) {
       final session = supabase.auth.currentSession;

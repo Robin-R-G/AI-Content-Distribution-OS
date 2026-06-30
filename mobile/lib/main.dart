@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/config/env_config.dart';
 import 'core/theme/theme.dart';
 import 'core/router/app_router.dart';
+import 'core/services/onesignal_service.dart';
 import 'features/ads/ad_manager.dart';
 import 'features/ads/app_open_ad.dart';
 
@@ -26,6 +27,9 @@ void main() async {
 
   // Initialize ads
   await MobileAds.instance.initialize();
+
+  // Initialize OneSignal
+  OneSignalService.initialize(EnvConfig.oneSignalAppId);
 
   // Preload app open ad (only shows on cold start)
   AppOpenAdHandler.preload();
