@@ -20,7 +20,7 @@ class AdConfig {
 }
 
 class AdService {
-  int _bannerLoadAttempts = 0;
+  final int _bannerLoadAttempts = 0;
   int _interstitialLoadAttempts = 0;
   InterstitialAd? _interstitialAd;
 
