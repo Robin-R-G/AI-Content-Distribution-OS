@@ -24,30 +24,40 @@ void main() async {
   ));
 
   // Initialize Supabase
-  await Supabase.initialize(
-    url: EnvConfig.supabaseUrl,
-    publishableKey: EnvConfig.supabaseAnonKey,
-  );
+  try {
+    await Supabase.initialize(
+      url: EnvConfig.supabaseUrl,
+      publishableKey: EnvConfig.supabaseAnonKey,
+    );
+  } catch (e) {
+    debugPrint('Supabase init failed: $e');
+  }
 
   // Initialize ads
-  await MobileAds.instance.initialize();
+  try {
+    await MobileAds.instance.initialize();
+  } catch (e) {
+    debugPrint('MobileAds init failed: $e');
+  }
 
   // Initialize OneSignal
-  OneSignalService.initialize(EnvConfig.oneSignalAppId).catchError((e) {
-    debugPrint("OneSignal initialization crashed: $e");
-  });
+  try {
+    await OneSignalService.initialize(EnvConfig.oneSignalAppId);
+  } catch (e) {
+    debugPrint('OneSignal init failed: $e');
+  }
 
-  // Initialize services
-  await AiService().initialize();
-  await CreditService().initialize();
-  await PaymentService().initialize();
-  await AdminService().initialize();
+  // Initialize services (wrapped in try-catch so app doesn't crash)
+  try { await AiService().initialize(); } catch (e) { debugPrint('AiService init failed: $e'); }
+  try { await CreditService().initialize(); } catch (e) { debugPrint('CreditService init failed: $e'); }
+  try { await PaymentService().initialize(); } catch (e) { debugPrint('PaymentService init failed: $e'); }
+  try { await AdminService().initialize(); } catch (e) { debugPrint('AdminService init failed: $e'); }
 
   // Preload app open ad (only shows on cold start)
-  AppOpenAdHandler.preload();
+  try { AppOpenAdHandler.preload(); } catch (e) { debugPrint('AppOpenAd preload failed: $e'); }
 
   // Initialize ad manager
-  AdManager().initialize();
+  try { AdManager().initialize(); } catch (e) { debugPrint('AdManager init failed: $e'); }
 
   runApp(
     const ProviderScope(

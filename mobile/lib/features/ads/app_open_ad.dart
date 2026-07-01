@@ -15,7 +15,6 @@ class AppOpenAdHandler {
     AppOpenAd.load(
       adUnitId: AdConfig.appOpenAdUnitId,
       request: const AdRequest(),
-      orientation: 1,
       adLoadCallback: AppOpenAdLoadCallback(
         onAdLoaded: (ad) {
           _appOpenAd = ad;
