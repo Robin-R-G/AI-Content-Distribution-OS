@@ -33,7 +33,9 @@ void main() async {
   await MobileAds.instance.initialize();
 
   // Initialize OneSignal
-  OneSignalService.initialize(EnvConfig.oneSignalAppId);
+  OneSignalService.initialize(EnvConfig.oneSignalAppId).catchError((e) {
+    debugPrint("OneSignal initialization crashed: $e");
+  });
 
   // Initialize services
   await AiService().initialize();

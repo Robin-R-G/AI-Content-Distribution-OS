@@ -6,21 +6,29 @@ class OneSignalService {
   static bool _dialogShown = false;
 
   /// Initialize the OneSignal SDK and register observers.
-  static void initialize(String appId) {
-    // Set Log Level for debug
-    OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+  static Future<void> initialize(String appId) async {
+    try {
+      // Set Log Level for debug
+      OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
 
-    // Initialize OneSignal
-    OneSignal.initialize(appId);
+      // Initialize OneSignal
+      await OneSignal.initialize(appId);
 
-    // Register push subscription observer
-    OneSignal.User.pushSubscription.addObserver((state) {
-      debugPrint('OneSignal Push Subscription changed: ${state.current.id}');
+      // Register push subscription observer
+      OneSignal.User.pushSubscription.addObserver((state) {
+        try {
+          debugPrint('OneSignal Push Subscription changed: ${state.current.id}');
+          _checkAndShowVerificationDialog();
+        } catch (e) {
+          debugPrint('Error in OneSignal subscription observer callback: $e');
+        }
+      });
+
+      // Evaluate subscription state immediately
       _checkAndShowVerificationDialog();
-    });
-
-    // Evaluate subscription state immediately
-    _checkAndShowVerificationDialog();
+    } catch (e) {
+      debugPrint('Error during OneSignalService.initialize: $e');
+    }
   }
 
   /// Private helper to check subscription and present native dialog
