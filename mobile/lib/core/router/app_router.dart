@@ -17,6 +17,7 @@ import '../../features/payment/payment_screen.dart';
 import '../../features/subscription/subscription_plans_screen.dart';
 import '../../features/admin/admin_login_screen.dart';
 import '../../features/admin/admin_dashboard_screen.dart';
+import '../../features/admin/admin_service.dart';
 
 final rootNavigatorKey = GlobalKey<NavigatorState>();
 
@@ -30,6 +31,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     redirect: (context, state) {
       final session = supabase.auth.currentSession;
       final location = state.matchedLocation;
+
+      // Secure admin routes
+      if (location == '/admin/dashboard' && !AdminService().isAdmin) {
+        return '/admin';
+      }
 
       final publicRoutes = ['/', '/login', '/register', '/forgot-password', '/tutorial', '/admin'];
       final isPublicRoute = publicRoutes.contains(location);

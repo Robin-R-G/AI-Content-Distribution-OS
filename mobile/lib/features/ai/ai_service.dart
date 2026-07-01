@@ -169,6 +169,7 @@ class AiService {
       name: 'Gemini',
       baseUrl: 'https://generativelanguage.googleapis.com/v1beta/models',
       model: 'gemini-2.0-flash',
+      apiKey: 'AQ.Ab8RN6KIfdAr1HoVQyGdGqcNjtBt3avN0g9zPVH4XAwWFdvN',
       enabled: true,
       priority: 0,
       dailyTokenLimit: 1500,

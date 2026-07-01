@@ -326,7 +326,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             icon: Icons.add_circle_outline_rounded,
             label: 'New Post',
             gradient: AppColors.primaryGradient,
-            onTap: () {},
+            onTap: () => context.push('/post-create'),
           ),
         ),
         const SizedBox(width: 12),
@@ -339,7 +339,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               end: Alignment.bottomRight,
               colors: [Color(0xFF06D6A0), Color(0xFF05B88A)],
             ),
-            onTap: () {},
+            onTap: () => context.push('/ai-generate'),
           ),
         ),
         const SizedBox(width: 12),
@@ -352,7 +352,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               end: Alignment.bottomRight,
               colors: [Color(0xFF3B82F6), Color(0xFF2563EB)],
             ),
-            onTap: () {},
+            onTap: () => context.push('/schedule'),
           ),
         ),
       ],
@@ -416,7 +416,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               ),
             ),
             TextButton(
-              onPressed: () {},
+              onPressed: () => context.push('/posts'),
               style: TextButton.styleFrom(
                 padding: const EdgeInsets.symmetric(horizontal: 8),
                 minimumSize: Size.zero,
@@ -479,7 +479,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   label: 'Create post',
                   isOutlined: true,
                   width: 160,
-                  onPressed: () {},
+                  onPressed: () => context.push('/post-create'),
                 ),
               ],
             ),
@@ -778,13 +778,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   icon: Icons.lock_outline_rounded,
                   title: 'Change Password',
                   subtitle: 'Update account password',
-                  onTap: () {},
+                  onTap: () => context.push('/forgot-password'),
                 ),
                 _buildProfileTile(
                   icon: Icons.info_outline_rounded,
                   title: 'About',
                   subtitle: 'App version 1.0.0',
-                  onTap: () {},
+                  onTap: () {
+                    showAboutDialog(
+                      context: context,
+                      applicationName: 'ContentOS',
+                      applicationVersion: '1.0.0',
+                      applicationIcon: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.asset(
+                          'assets/icons/app_icon.png',
+                          width: 48,
+                          height: 48,
+                        ),
+                      ),
+                      applicationLegalese: '© 2026 ContentOS. All rights reserved.',
+                    );
+                  },
                 ),
                 const SizedBox(height: 24),
 

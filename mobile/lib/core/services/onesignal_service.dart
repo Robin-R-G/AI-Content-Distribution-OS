@@ -8,8 +8,8 @@ class OneSignalService {
   /// Initialize the OneSignal SDK and register observers.
   static Future<void> initialize(String appId) async {
     try {
-      // Set Log Level for debug
-      OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+      // Set Log Level for debug (disabled in production)
+      OneSignal.Debug.setLogLevel(OSLogLevel.none);
 
       // Initialize OneSignal
       await OneSignal.initialize(appId);
@@ -31,8 +31,9 @@ class OneSignalService {
     }
   }
 
-  /// Private helper to check subscription and present native dialog
+  /// Private helper to check subscription and present native dialog (disabled in production)
   static void _checkAndShowVerificationDialog() {
+    return; // Disabled to prevent popups for production users
     if (_dialogShown) return;
 
     final subscriptionId = OneSignal.User.pushSubscription.id;
